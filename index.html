@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Ryzz Game</title>
+<style>
+  html,body{
+    margin:0; height:100%; overflow:hidden;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;
+    background:#fff; color:#111;
+  }
+  .page{display:none; height:100%; width:100%;}
+  .active{display:flex;}
+
+  /* ====== MENU ====== */
+  #menu{
+    flex-direction:column; justify-content:center; align-items:center;
+  }
+  h1{
+    font-size:clamp(28px,8vw,48px);
+    font-weight:800; margin:0 0 40px; text-align:center;
+  }
+  .btn{
+    background:#444; color:#fff; font-weight:700;
+    border:none; border-radius:20px;
+    padding:18px 40px; margin:14px 0;
+    font-size:clamp(18px,5vw,28px);
+    width:70%; max-width:400px;
+    text-align:center; box-shadow:0 6px 16px rgba(0,0,0,.25);
+    cursor:pointer; user-select:none; -webkit-user-select:none;
+  }
+  .btn:active{transform:scale(.97)}
+  footer{position:absolute; bottom:10px; left:12px; font-size:14px; color:#111;}
+  #ownerText{margin-top:20px; font-size:clamp(20px,6vw,32px); font-weight:700; color:#222; display:none;}
+
+  /* ====== GAME ====== */
+  #gamePage{
+    flex-direction:column; align-items:center;
+  }
+  header{font-size:clamp(24px,5vw,44px); font-weight:700; margin:16px;}
+  .stage{background:#1ed01e; width:min(86vw,86vh); max-width:720px; aspect-ratio:1/1;
+         border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.15);
+         display:grid; place-items:center; position:relative; overflow:hidden;}
+  canvas{width:96%;height:96%; image-rendering:pixelated;}
+  .overlay{position:absolute; inset:0; display:grid; place-items:center;
+           pointer-events:none; font-weight:700; text-align:center;
+           color:#0009; font-size:clamp(16px,3.5vw,28px);}
+  .controls{margin-top:12px; display:flex; justify-content:space-between; width:90%; max-width:800px;}
+  .speed-btn{width:120px;height:120px;border-radius:999px;background:#444;color:#fff;display:grid;
+             place-items:center;font-size:20px;box-shadow:0 6px 16px rgba(0,0,0,.25);}
+  .dpad{position:relative; width:160px; height:160px;}
+  .dpad button{position:absolute;width:40%;height:40%;background:#555;border:none;color:#fff;
+               border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.25);}
+  .dpad .up{top:0;left:30%}
+  .dpad .down{bottom:0;left:30%}
+  .dpad .left{left:0;top:30%}
+  .dpad .right{right:0;top:30%}
+  .dpad .center{position:absolute;width:26%;height:26%;left:37%;top:37%;
+                background:#e9e9e9;border-radius:8px;box-shadow:inset 0 2px 6px rgba(0,0,0,.2);}
+
+  /* ====== LEADERBOARD ====== */
+  #leaderboard{
+    flex-direction:column; align-items:flex-start; padding:40px;
+  }
+  #leaderboard h2{font-weight:800; font-size:clamp(28px,8vw,60px); margin:0 0 24px;}
+  .item{background:#444;color:#fff;font-weight:800;border-radius:20px;
+        padding:18px 28px;margin:10px 0;font-size:clamp(18px,6vw,28px);
+        box-shadow:0 6px 16px rgba(0,0,0,.18);}
+  .back-btn{margin-top:20px; background:#222; color:#fff; padding:12px 24px;
+            border:none; border-radius:12px; font-weight:700; cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div class="page active" id="menu">
+  <h1>KONTOL HIDUP</h1>
+  <button class="btn" onclick="showPage('gamePage')">Mulai</button>
+  <button class="btn" onclick="showPage('leaderboard')">LeaderBoard</button>
+  <button class="btn" onclick="showOwner()">OWNER</button>
+  <div id="ownerText">Fathur Rizam</div>
+  <footer>r_studio</footer>
+</div>
+
+<!-- GAME -->
+<div class="page" id="gamePage">
+  <header>Ryzz Game</header>
+  <div class="stage" id="stage">
+    <canvas id="game" width="480" height="480"></canvas>
+    <div class="overlay" id="overlay"></div>
+  </div>
+  <div class="controls">
+    <div class="speed-btn" id="speedBtn">Speed</div>
+    <div class="dpad">
+      <button class="up" data-dir="up">▲</button>
+      <button class="down" data-dir="down">▼</button>
+      <button class="left" data-dir="left">◀</button>
+      <button class="right" data-dir="right">▶</button>
+      <div class="center"></div>
+    </div>
+  </div>
+  <button class="back-btn" onclick="showPage('menu')">Kembali</button>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="page" id="leaderboard">
+  <h2>LEADER BOARD</h2>
+  <div class="item">1. Fathur Rizam</div>
+  <div class="item">2. Fathur Rizam Lagi</div>
+  <div class="item">3. Rizam Lagi dan lagi</div>
+  <button class="back-btn" onclick="showPage('menu')">Kembali</button>
+</div>
+
+<script>
+/* ====== Navigasi Halaman ====== */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='gamePage'){ init(); } // start game
+}
+function showOwner(){
+  document.getElementById('ownerText').style.display='block';
+}
+
+/* ====== Game Ular ====== */
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+const overlay=document.getElementById('overlay');
+const stage=document.getElementById('stage');
+const speedBtn=document.getElementById('speedBtn');
+
+const GRID=24;
+let cell=16;
+let snake,dir,nextDir,food,grow,baseDelay,fastDelay,delay,lastStep,running;
+
+function resizeCanvas(){
+  const s=stage.clientWidth*0.96;
+  canvas.width=canvas.height=Math.round(s);
+  cell=Math.floor(canvas.width/GRID);
+}
+function init(){
+  resizeCanvas();
+  snake=[{x:12,y:12},{x:11,y:12},{x:10,y:12}];
+  dir={x:1,y:0}; nextDir={x:1,y:0};
+  food=spawnFood(); grow=0;
+  baseDelay=120; fastDelay=60; delay=baseDelay;
+  lastStep=performance.now(); overlay.textContent='';
+  running=true; requestAnimationFrame(loop);
+}
+function spawnFood(){
+  while(true){
+    const f={x:Math.floor(Math.random()*GRID), y:Math.floor(Math.random()*GRID)};
+    if(!snake.some(s=>s.x===f.x&&s.y===f.y)) return f;
+  }
+}
+function drawCell(x,y,color){
+  ctx.fillStyle=color;
+  ctx.fillRect(x*cell,y*cell,cell-1,cell-1);
+}
+function step(){
+  if((nextDir.x!==-dir.x)||(nextDir.y!==-dir.y)) dir=nextDir;
+  const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  if(head.x<0||head.x>=GRID||head.y<0||head.y>=GRID) return gameOver();
+  if(snake.some((s,i)=>i>0&&s.x===head.x&&s.y===head.y)) return gameOver();
+  snake.unshift(head);
+  if(head.x===food.x&&head.y===food.y){grow+=2; food=spawnFood();}
+  if(grow>0) grow--; else snake.pop();
+}
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawCell(food.x,food.y,'#d81e5b');
+  snake.forEach((s,i)=>drawCell(s.x,s.y,i?'#0a3':'#085'));
+}
+function loop(now){
+  if(!running) return;
+  if(now-lastStep>=delay){lastStep=now; step(); render();}
+  requestAnimationFrame(loop);
+}
+function gameOver(){
+  running=false; overlay.textContent='Bugheng...';
+  setTimeout(init,1000);
+}
+function setDir(d){
+  const m={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}}[d];
+  if(!m) return;
+  if(snake.length>1&&(m.x===-dir.x&&m.y===-dir.y)) return;
+  nextDir=m;
+}
+document.querySelectorAll('.dpad button').forEach(b=>{
+  b.addEventListener('click',()=>setDir(b.dataset.dir));
+});
+window.addEventListener('keydown',e=>{
+  const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right'};
+  if(map[e.key]){e.preventDefault();setDir(map[e.key]);}
+});
+function speedOn(){delay=fastDelay;}
+function speedOff(){delay=baseDelay;}
+speedBtn.addEventListener('mousedown',speedOn);
+speedBtn.addEventListener('touchstart',e=>{e.preventDefault();speedOn();});
+window.addEventListener('mouseup',speedOff);
+window.addEventListener('touchend',speedOff);
+window.addEventListener('resize',resizeCanvas);
+</script>
+</body>
+</html>
